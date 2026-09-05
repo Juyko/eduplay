@@ -330,7 +330,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-indigo-500 selection:text-white pb-20 sm:pb-0">
       
       {showPremiumModal && (
         <PremiumModal 
@@ -368,7 +368,7 @@ export default function App() {
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={() => setShowPremiumModal(true)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
                 isPremium 
                   ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/20' 
                   : 'bg-slate-800 text-amber-400 hover:bg-slate-700 border border-amber-500/30'
@@ -388,39 +388,44 @@ export default function App() {
             {view !== 'MARKET' && view !== 'GAME' && isBetModeUnlocked && (
               <button
                 onClick={() => setView('BET_MENU')}
-                className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-rose-900/80 to-red-950/85 hover:from-rose-800 hover:to-red-900 border border-rose-800/60 hover:border-red-700/60 px-3 sm:px-4 py-2 rounded-xl transition shadow-[0_0_15px_rgba(239,68,68,0.25)] text-red-300 font-extrabold text-xs sm:text-sm cursor-pointer"
+                className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-rose-900/80 to-red-950/85 hover:from-rose-800 hover:to-red-900 border border-rose-800/60 hover:border-red-700/60 px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl transition shadow-[0_0_15px_rgba(239,68,68,0.25)] text-red-300 font-extrabold text-xs sm:text-sm cursor-pointer"
               >
                 <Skull className="w-4 h-4 text-red-400 animate-pulse shrink-0" />
                 <span className="hidden sm:inline">{t('app.betmode.active')}</span>
               </button>
             )}
-            <button
-              onClick={() => setView('ANALYZE')}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                view === 'ANALYZE' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25' : 'text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-            >
-              <Gamepad2 className="w-4 h-4" />
-              {t('app.tab.analyze')}
-            </button>
-            <button
-              onClick={() => setView('GAME')}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                view === 'GAME' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25' : 'text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-            >
-              <Play className="w-4 h-4" />
-              {t('app.tab.games')}
-            </button>
-            <button
-              onClick={() => setView('MARKET')}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                view === 'MARKET' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25' : 'text-slate-400 hover:text-white hover:bg-slate-800'
-              }`}
-            >
-              <ShoppingCart className="w-4 h-4" />
-              {t('app.tab.market')}
-            </button>
+            
+            {/* Desktop Tabs */}
+            <div className="hidden sm:flex items-center gap-2">
+              <button
+                onClick={() => setView('ANALYZE')}
+                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                  view === 'ANALYZE' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                <Gamepad2 className="w-4 h-4" />
+                {t('app.tab.analyze')}
+              </button>
+              <button
+                onClick={() => setView('GAME')}
+                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                  view === 'GAME' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                <Play className="w-4 h-4" />
+                {t('app.tab.games')}
+              </button>
+              <button
+                onClick={() => setView('MARKET')}
+                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                  view === 'MARKET' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                <ShoppingCart className="w-4 h-4" />
+                {t('app.tab.market')}
+              </button>
+            </div>
+
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="p-2 sm:p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 transition border border-slate-700/50 shadow-inner text-slate-300 cursor-pointer"
@@ -435,6 +440,39 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/90 backdrop-blur-lg border-t border-slate-800 pb-safe">
+        <div className="flex items-center justify-around p-2 gap-2">
+          <button
+            onClick={() => setView('ANALYZE')}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-xs font-bold transition-all ${
+              view === 'ANALYZE' ? 'bg-amber-500/10 text-amber-500' : 'text-slate-400 hover:text-slate-300'
+            }`}
+          >
+            <Gamepad2 className="w-5 h-5" />
+            <span className="truncate">{t('app.tab.analyze')}</span>
+          </button>
+          <button
+            onClick={() => setView('GAME')}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-xs font-bold transition-all ${
+              view === 'GAME' ? 'bg-amber-500/10 text-amber-500' : 'text-slate-400 hover:text-slate-300'
+            }`}
+          >
+            <Play className="w-5 h-5" />
+            <span className="truncate">{t('app.tab.games')}</span>
+          </button>
+          <button
+            onClick={() => setView('MARKET')}
+            className={`flex-1 flex flex-col items-center justify-center gap-1 py-2 rounded-xl text-xs font-bold transition-all ${
+              view === 'MARKET' ? 'bg-amber-500/10 text-amber-500' : 'text-slate-400 hover:text-slate-300'
+            }`}
+          >
+            <ShoppingCart className="w-5 h-5" />
+            <span className="truncate">{t('app.tab.market')}</span>
+          </button>
+        </div>
+      </div>
 
       {/* Analyzer View */}
       {view === 'ANALYZE' && (
