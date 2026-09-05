@@ -8,7 +8,6 @@ import BreakoutGame from './components/BreakoutGame';
 import PongGame from './components/PongGame';
 import TetrisGame from './components/TetrisGame';
 import BombGame from './components/BombGame';
-import BlackjackGame from './components/BlackjackGame';
 import Market, { SKINS } from './components/Market';
 import { Question, Difficulty } from './utils/questionExtractor';
 import { Gamepad2, Play, Sun, Moon, ShoppingCart, Skull, AlertTriangle, Globe, Crown } from 'lucide-react';
@@ -99,7 +98,7 @@ import type { Session } from '@supabase/supabase-js';
 
 export default function App() {
   const { t, language, setLanguage } = useTranslation();
-  const [view, setView] = useState<'ANALYZE' | 'GAME' | 'MARKET' | 'BET_MENU'>('ANALYZE');
+  const [view, setView] = useState<'ANALYZE' | 'GAME' | 'MARKET'>('ANALYZE');
 
   const GAMES = getGames(t);
 
@@ -123,18 +122,6 @@ export default function App() {
   // Premium & i18n states
   const [isPremium, setIsPremium] = useState<boolean>(false);
   const [showPremiumModal, setShowPremiumModal] = useState<boolean>(false);
-
-  // Bet mode state
-  const [isBetModeUnlocked, setIsBetModeUnlocked] = useState<boolean>(false);
-  const [isBetModeActive, setIsBetModeActive] = useState<boolean>(false);
-  const [currentBet, setCurrentBet] = useState<number>(10);
-  const [betResult, setBetResult] = useState<{
-    score: number;
-    won: boolean;
-    payout: number;
-    gameEmoji: string;
-    gameName: string;
-  } | null>(null);
   const [gameType, setGameType] = useState<GameType>('SPACE');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [difficulty, setDifficulty] = useState<Difficulty>('NORMAL');
@@ -254,59 +241,21 @@ export default function App() {
       supabase.from('equipped_skins').delete().eq('user_id', session.user.id).then();
     }
   };
-
-  const handleGameOverBet = (arg1: number | boolean, payoutOrDummy?: number, gameEmoji?: string, gameName?: string) => {
-    if (isBetModeActive && typeof arg1 === 'boolean') {
-      const won = arg1;
-      const payout = payoutOrDummy || 0;
-      
-      if (payout > 0) {
-        addCoins(payout);
-      }
-      
-      setBetResult({
-        score: 0,
-        won,
-        payout,
-        gameEmoji: gameEmoji || '🃏',
-        gameName: gameName || 'Blackjack'
-      });
-      setIsBetModeActive(false);
-      setView('BET_MENU');
-    }
-  };
-
-  const handleStartBetGame = () => {
-    if (coins < currentBet && coins === 0 && currentBet <= 10) {
-      addCoins(-currentBet);
-    } else if (coins < currentBet) {
-      alert(t('app.alert.balance'));
-      return;
-    } else {
-      addCoins(-currentBet);
-    }
-    
-    setIsBetModeActive(true);
-    setView('GAME');
-  };
-
   const currentGame = GAMES.find(g => g.id === gameType)!;
 
   const renderGame = () => {
     const props = {  
       questions: questions.length > 0 ? questions : FALLBACK_QUESTIONS,
       onBack: () => {
-        if (isBetModeActive) {
-          setIsBetModeActive(false);
-        }
-        setView(isBetModeActive || view === 'BET_MENU' ? 'BET_MENU' : 'ANALYZE');
+        
+        setView('ANALYZE');
       },
       highScore: highScores[gameType],
       setHighScore: handleSetHighScore(gameType),
       difficulty,
       addCoins,
       skin: equippedSkins[gameType] || 'DEFAULT',
-      onGameOver: handleGameOverBet
+      
     };
     switch (gameType) {
       case 'SPACE': return <ArcadeGame {...props} />;
@@ -385,15 +334,6 @@ export default function App() {
             >
               <Globe className="w-4 h-4 text-sky-400" />
             </button>
-            {view !== 'MARKET' && view !== 'GAME' && isBetModeUnlocked && (
-              <button
-                onClick={() => setView('BET_MENU')}
-                className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-rose-900/80 to-red-950/85 hover:from-rose-800 hover:to-red-900 border border-rose-800/60 hover:border-red-700/60 px-2 sm:px-4 py-1.5 sm:py-2 rounded-xl transition shadow-[0_0_15px_rgba(239,68,68,0.25)] text-red-300 font-extrabold text-xs sm:text-sm cursor-pointer"
-              >
-                <Skull className="w-4 h-4 text-red-400 animate-pulse shrink-0" />
-                <span className="hidden sm:inline">{t('app.betmode.active')}</span>
-              </button>
-            )}
             
             {/* Desktop Tabs */}
             <div className="hidden sm:flex items-center gap-2">
@@ -553,8 +493,6 @@ export default function App() {
                 setIsBetModeActive(false);
                 setView('BET_MENU');
               }}
-              onGameOver={handleGameOverBet}
-              currentBet={currentBet}
               questions={questions.length > 0 ? questions : FALLBACK_QUESTIONS}
             />
           ) : (
@@ -575,205 +513,10 @@ export default function App() {
             onBack={() => setView('ANALYZE')}
             onUnlockAll={handleUnlockAllSkins}
             onResetAll={handleResetAllSkins}
-            onUnlockBetMode={() => {
-              setIsBetModeUnlocked(true);
-              setView('BET_MENU');
-            }}
           />
         </div>
       )}
-
-      {/* Bet Menu View */}
-      {view === 'BET_MENU' && (
-        <div className="relative z-10 max-w-4xl w-full mx-auto p-4 sm:p-6 select-none flex-1 flex flex-col justify-center">
-          <div className="bg-slate-900/60 border-2 border-red-950/60 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-[0_0_50px_rgba(239,68,68,0.1)] flex flex-col gap-6">
-            <div className="flex justify-between items-center border-b border-red-950/40 pb-4 gap-4 flex-wrap">
-              <div>
-                <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-400 to-amber-500 tracking-wider flex items-center gap-2">
-                  <Skull className="w-6 h-6 text-red-500 animate-bounce" /> BLACKJACK BAHİS MASASI
-                </h2>
-                <p className="text-xs text-slate-400 mt-1">
-                  Puanlarınla Blackjack oyna, kaybedersen soru bilerek bahsini kurtar!
-                </p>
-              </div>
-              <button
-                onClick={() => setView('ANALYZE')}
-                className="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold px-4 py-2 rounded-xl transition text-sm shadow-md cursor-pointer"
-              >
-                Ana Menüye Dön
-              </button>
-            </div>
-
-            {/* Betting Panel */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-              {/* Left Column: Stats & Setup */}
-              <div className="bg-slate-950/60 border border-red-950/40 p-5 rounded-2xl flex flex-col justify-between gap-4">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-3">Bahis Kurulumu</h3>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs font-semibold text-slate-400">Bakiyeniz:</span>
-                    <div className="text-amber-400 font-black text-lg flex items-center gap-1">
-                      <span>🪙</span> {coins}
-                    </div>
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="text-xs font-semibold text-slate-400 block mb-2">Bahis Miktarı:</label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="range"
-                        min="10"
-                        max={Math.max(10, Math.floor(coins / 10) * 10 || 100)}
-                        step="10"
-                        value={currentBet}
-                        onChange={(e) => setCurrentBet(Number(e.target.value))}
-                        className="flex-1 accent-red-500 bg-slate-800 rounded-lg h-2"
-                      />
-                      <span className="bg-red-950/50 border border-red-800/40 text-red-400 font-black text-lg px-3 py-1 rounded-xl min-w-[70px] text-center font-mono">
-                        {currentBet}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 mb-4 flex-wrap">
-                    {[10, 50, 100, 200, 500].map(val => (
-                      <button
-                        key={val}
-                        onClick={() => setCurrentBet(val)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-black font-mono transition border cursor-pointer ${
-                          currentBet === val
-                            ? 'bg-red-500 border-red-400 text-slate-950'
-                            : 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-slate-400'
-                        }`}
-                      >
-                        {val}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Borç alma uyarısı */}
-                {coins <= 0 && (
-                  <div className="bg-orange-500/10 border border-orange-500/30 text-orange-400 p-3 rounded-xl text-[11px] font-semibold leading-relaxed">
-                    💡 Jetonunuz kalmadığı için 10 jetona kadar borç alıp bahis yapabilirsiniz! İlk kazancınızdan borç düşülecektir.
-                  </div>
-                )}
-
-                {/* Soru havuzu uyarısı */}
-                {questions.length === 0 && (
-                  <div className="bg-amber-500/10 border border-amber-500/30 text-amber-300 p-3 rounded-xl text-[11px] font-semibold leading-relaxed flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
-                    <span>Yüklü soru dosyası bulunamadı. Genel Kültür yedek soru havuzu kullanılacaktır.</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Right Column: Game Info */}
-              <div className="bg-slate-950/60 border border-red-950/40 p-5 rounded-2xl flex flex-col justify-between gap-4">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-300 uppercase tracking-wider mb-3">Kurallar</h3>
-                  <ul className="space-y-3 text-xs font-semibold text-slate-400 list-disc list-inside">
-                    <li>Amaç 21'i geçmeden kasadan daha yüksek puan almaktır.</li>
-                    <li>As (A) 1 veya 11 puan değerindedir.</li>
-                    <li>Kasa 17 puana ulaşana kadar zorunlu kart çeker.</li>
-                    <li><span className="text-emerald-400 font-bold">Kazanırsanız:</span> Bahsinizin 2 katını alırsınız.</li>
-                    <li><span className="text-red-400 font-bold">Kaybederseniz:</span> Soruyu doğru bilirseniz bahsiniz iade edilir, aksi halde kaybedersiniz.</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            {/* Launch Button */}
-            <button
-              onClick={handleStartBetGame}
-              className="w-full py-4 bg-gradient-to-r from-red-600 via-orange-600 to-amber-500 hover:brightness-110 text-slate-950 font-black tracking-widest text-lg rounded-2xl shadow-[0_0_30px_rgba(239,68,68,0.4)] hover:shadow-[0_0_40px_rgba(239,68,68,0.6)] active:scale-[0.99] transition flex items-center justify-center gap-3 uppercase cursor-pointer"
-            >
-              <Skull className="w-6 h-6 stroke-[3]" />
-              <span>Masaya Otur 🃏</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-
-      {/* Bet Result Modal */}
-      {betResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-lg">
-          <div className={`w-full max-w-md border-2 rounded-3xl p-8 text-center shadow-2xl relative overflow-hidden bg-slate-900 ${
-            betResult.payout > 0
-              ? 'border-emerald-500 shadow-[0_0_50px_rgba(16,185,129,0.3)]'
-              : 'border-red-950 shadow-[0_0_50px_rgba(239,68,68,0.2)]'
-          }`}>
-            <div className={`absolute -top-12 -left-12 w-32 h-32 rounded-full blur-[60px] opacity-20 ${
-              betResult.payout > 0 ? 'bg-emerald-500' : 'bg-red-500'
-            }`}></div>
-
-            <div className="text-6xl mb-4 transform scale-110 filter drop-shadow-md select-none">
-              {betResult.won ? '🏆' : '💀'}
-            </div>
-
-            <h3 className={`text-3xl font-black tracking-wider uppercase mb-2 ${
-              betResult.payout >= currentBet * 3
-                ? 'text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500'
-                : betResult.won
-                ? 'text-emerald-400'
-                : 'text-red-500'
-            }`}>
-              {betResult.payout >= currentBet * 3
-                ? 'MEGA KAZANÇ!'
-                : betResult.won
-                ? 'BAHİS KAZANILDI!'
-                : 'BAHİS KAYBEDİLDİ'}
-            </h3>
-
-            <p className="text-slate-400 text-xs mb-6 font-semibold">
-              {betResult.gameEmoji} {betResult.gameName} oyununda ölüm bahsi sonuçlandı.
-            </p>
-
-            <div className="bg-slate-950/60 border border-slate-800 rounded-2xl p-5 mb-6 space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-slate-400 font-bold">Yaptığınız Bahis:</span>
-                <span className="font-black text-slate-200 font-mono">{currentBet} 🪙</span>
-              </div>
-              <div className="flex justify-between items-center border-t border-slate-800/60 pt-3">
-                <span className="text-xs text-slate-400 font-bold">Kazanılan Jeton:</span>
-                <span className={`font-black text-lg font-mono ${
-                  betResult.payout > 0 ? 'text-emerald-400' : 'text-red-400'
-                }`}>
-                  {betResult.payout > 0 ? `+${betResult.payout}` : '0'} 🪙
-                </span>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setBetResult(null);
-                  setView('BET_MENU');
-                }}
-                className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-xl transition text-xs border border-slate-700 cursor-pointer"
-              >
-                Kapat
-              </button>
-              <button
-                onClick={() => {
-                  setBetResult(null);
-                  handleStartBetGame();
-                }}
-                className={`flex-1 font-black py-3 rounded-xl transition text-xs shadow-lg cursor-pointer ${
-                  betResult.won
-                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 hover:brightness-110 shadow-emerald-500/20'
-                    : 'bg-gradient-to-r from-red-600 to-orange-600 text-slate-950 hover:brightness-110 shadow-red-500/20'
-                }`}
-              >
-                Tekrar Bahis Yap 🔄
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Footer */}
+{/* Footer */}
       <footer className="relative z-10 border-t border-slate-800/80 bg-slate-900/30 py-3 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center text-[10px] text-slate-500">
           <span>© 2026 EduPlay Arcade</span>

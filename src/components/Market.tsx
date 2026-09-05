@@ -46,10 +46,9 @@ interface Props {
   onBack: () => void;
   onUnlockAll?: () => void;
   onResetAll?: () => void;
-  onUnlockBetMode?: () => void;
 }
 
-export default function Market({ coins, inventory, equipped, onBuy, onEquip, onBack, onUnlockAll, onResetAll, onUnlockBetMode }: Props) {
+export default function Market({ coins, inventory, equipped, onBuy, onEquip, onBack, onUnlockAll, onResetAll }: Props) {
   const { t } = useTranslation();
   const [adminCode, setAdminCode] = useState('');
   return (
