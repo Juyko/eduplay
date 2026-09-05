@@ -57,7 +57,6 @@ export default function FileAnalyzer({
 
   const [groqKey, setGroqKey] = useState(() => localStorage.getItem('groq_key') || "");
   const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('gemini_key') || "");
-  const [showApiSettings, setShowApiSettings] = useState(false);
 
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -522,36 +521,6 @@ export default function FileAnalyzer({
               {aiGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
               {aiGenerating ? t('analyze.ai.generating') : t('analyze.ai.generate.button')}
             </button>
-
-            <button onClick={() => setShowApiSettings(!showApiSettings)} className="text-[10px] text-slate-400 hover:text-slate-300 underline mt-1 text-center w-full">
-              {t('analyze.ai.custom.api')}
-            </button>
-
-            {showApiSettings && (
-              <div className="flex flex-col gap-2 p-3 bg-slate-900/80 rounded-xl border border-slate-700/50 mt-1">
-                <div>
-                  <label className="text-[10px] text-slate-400 font-bold mb-1 block">{t('analyze.ai.groq.key')}</label>
-                  <input 
-                    type="password" 
-                    value={groqKey} 
-                    onChange={(e) => { setGroqKey(e.target.value); localStorage.setItem('groq_key', e.target.value); }} 
-                    placeholder="gsk_..."
-                    className="w-full bg-slate-800 border border-slate-700 rounded-md px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] text-slate-400 font-bold mb-1 block">{t('analyze.ai.gemini.key')}</label>
-                  <input 
-                    type="password" 
-                    value={geminiKey} 
-                    onChange={(e) => { setGeminiKey(e.target.value); localStorage.setItem('gemini_key', e.target.value); }} 
-                    placeholder="AIza..."
-                    className="w-full bg-slate-800 border border-slate-700 rounded-md px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
-                  />
-                </div>
-                <span className="text-[9px] text-slate-500 mt-1 leading-tight">{t('analyze.ai.api.warn')}</span>
-              </div>
-            )}
 
             {aiError && (
               <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-2 text-[11px] text-red-300">
