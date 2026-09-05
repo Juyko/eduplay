@@ -93,11 +93,32 @@ const FALLBACK_QUESTIONS: Question[] = [
   }
 ];
 
+import Auth from './components/Auth';
+import { supabase } from './utils/supabaseClient';
+import type { Session } from '@supabase/supabase-js';
+
 export default function App() {
   const { t, language, setLanguage } = useTranslation();
   const [view, setView] = useState<'ANALYZE' | 'GAME' | 'MARKET' | 'BET_MENU'>('ANALYZE');
 
   const GAMES = getGames(t);
+
+  // Auth Session
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Premium & i18n states
   const [isPremium, setIsPremium] = useState<boolean>(false);
@@ -117,33 +138,51 @@ export default function App() {
   const [gameType, setGameType] = useState<GameType>('SPACE');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [difficulty, setDifficulty] = useState<Difficulty>('NORMAL');
-  const [highScores, setHighScores] = useState<Record<GameType, number>>(() => {
-    try {
-      const saved = localStorage.getItem('eduplay_highscores_v2');
-      if (saved) return { ...INITIAL_HIGH_SCORES, ...JSON.parse(saved) };
-    } catch { }
-    return INITIAL_HIGH_SCORES;
-  });
-
-  // Economy state
-  const [coins, setCoins] = useState<number>(() => {
-    return parseInt(localStorage.getItem('eduplay_coins') || '0');
-  });
-  const [inventory, setInventory] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem('eduplay_inventory') || '[]'); } catch { return []; }
-  });
-  const [equippedSkins, setEquippedSkins] = useState<Record<string, string>>(() => {
-    try { return JSON.parse(localStorage.getItem('eduplay_equipped') || '{}'); } catch { return {}; }
-  });
+  
+  const [highScores, setHighScores] = useState<Record<GameType, number>>(INITIAL_HIGH_SCORES);
+  const [coins, setCoins] = useState<number>(0);
+  const [inventory, setInventory] = useState<string[]>([]);
+  const [equippedSkins, setEquippedSkins] = useState<Record<string, string>>({});
+  const [aiGenerationCount, setAiGenerationCount] = useState<number>(0);
 
   useEffect(() => {
-    try {
-      localStorage.setItem('eduplay_highscores_v2', JSON.stringify(highScores));
-      localStorage.setItem('eduplay_coins', coins.toString());
-      localStorage.setItem('eduplay_inventory', JSON.stringify(inventory));
-      localStorage.setItem('eduplay_equipped', JSON.stringify(equippedSkins));
-    } catch { }
-  }, [highScores, coins, inventory, equippedSkins]);
+    if (!session?.user) return;
+    
+    // Fetch Profile
+    supabase.from('profiles').select('*').eq('id', session.user.id).single().then(({ data, error }) => {
+      if (data) {
+        setCoins(data.coins);
+        setIsPremium(data.is_premium);
+        setAiGenerationCount(data.ai_generation_count || 0);
+      }
+    });
+
+    // Fetch Inventory
+    supabase.from('inventory').select('skin_id').eq('user_id', session.user.id).then(({ data }) => {
+      if (data) setInventory(data.map(i => i.skin_id));
+    });
+
+    // Fetch Equipped Skins
+    supabase.from('equipped_skins').select('game_id, skin_id').eq('user_id', session.user.id).then(({ data }) => {
+      if (data) {
+        const eq: Record<string, string> = {};
+        data.forEach(d => { eq[d.game_id] = d.skin_id; });
+        setEquippedSkins(eq);
+      }
+    });
+
+    // Fetch Highscores
+    supabase.from('high_scores').select('game_id, score').eq('user_id', session.user.id).then(({ data }) => {
+      if (data) {
+        const hs = { ...INITIAL_HIGH_SCORES };
+        data.forEach(d => {
+          if (d.score > hs[d.game_id as GameType]) hs[d.game_id as GameType] = d.score;
+        });
+        setHighScores(hs);
+      }
+    });
+
+  }, [session]);
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     return (localStorage.getItem('eduplay_theme') as 'dark' | 'light') || 'dark';
@@ -159,33 +198,61 @@ export default function App() {
   }, [theme]);
 
   const handleSetHighScore = (gameType: GameType) => (newScore: number) => {
-    setHighScores(prev => ({
-      ...prev,
-      [gameType]: Math.max(prev[gameType], newScore)
-    }));
+    setHighScores(prev => {
+      const best = Math.max(prev[gameType], newScore);
+      if (session?.user && best > prev[gameType]) {
+        supabase.from('high_scores').upsert({ user_id: session.user.id, game_id: gameType, score: best }).then();
+      }
+      return { ...prev, [gameType]: best };
+    });
   };
 
-  const addCoins = (amount: number) => setCoins(prev => prev + amount);
+  const addCoins = (amount: number) => {
+    setCoins(prev => {
+      const updated = prev + amount;
+      if (session?.user) supabase.from('profiles').update({ coins: updated }).eq('id', session.user.id).then();
+      return updated;
+    });
+  };
 
   const handleBuySkin = (skinId: string, cost: number) => {
     if (coins >= cost && !inventory.includes(skinId)) {
-      setCoins(prev => prev - cost);
-      setInventory(prev => [...prev, skinId]);
+      setCoins(prev => {
+        const updated = prev - cost;
+        if (session?.user) supabase.from('profiles').update({ coins: updated }).eq('id', session.user.id).then();
+        return updated;
+      });
+      setInventory(prev => {
+        const updated = [...prev, skinId];
+        if (session?.user) supabase.from('inventory').insert({ user_id: session.user.id, skin_id: skinId }).then();
+        return updated;
+      });
     }
   };
 
   const handleEquipSkin = (gameId: string, skinId: string) => {
-    setEquippedSkins(prev => ({ ...prev, [gameId]: skinId }));
+    setEquippedSkins(prev => {
+      const updated = { ...prev, [gameId]: skinId };
+      if (session?.user) supabase.from('equipped_skins').upsert({ user_id: session.user.id, game_id: gameId, skin_id: skinId }).then();
+      return updated;
+    });
   };
 
   const handleUnlockAllSkins = () => {
     const allIds = SKINS.map(s => s.id);
     setInventory(allIds);
+    if (session?.user) {
+      allIds.forEach(id => supabase.from('inventory').upsert({ user_id: session.user.id, skin_id: id }).then());
+    }
   };
 
   const handleResetAllSkins = () => {
     setInventory([]);
     setEquippedSkins({});
+    if (session?.user) {
+      supabase.from('inventory').delete().eq('user_id', session.user.id).then();
+      supabase.from('equipped_skins').delete().eq('user_id', session.user.id).then();
+    }
   };
 
   const handleGameOverBet = (arg1: number | boolean, payoutOrDummy?: number, gameEmoji?: string, gameName?: string) => {
@@ -194,7 +261,7 @@ export default function App() {
       const payout = payoutOrDummy || 0;
       
       if (payout > 0) {
-        setCoins(prev => prev + payout);
+        addCoins(payout);
       }
       
       setBetResult({
@@ -211,12 +278,12 @@ export default function App() {
 
   const handleStartBetGame = () => {
     if (coins < currentBet && coins === 0 && currentBet <= 10) {
-      setCoins(-currentBet);
+      addCoins(-currentBet);
     } else if (coins < currentBet) {
-      alert('Yetersiz bakiye! Lütfen daha düşük bir bahis seçin.');
+      alert(t('app.alert.balance'));
       return;
     } else {
-      setCoins(prev => prev - currentBet);
+      addCoins(-currentBet);
     }
     
     setIsBetModeActive(true);
@@ -258,6 +325,10 @@ export default function App() {
     setLanguage(language === 'tr' ? 'en' : 'tr');
   };
 
+  if (!session) {
+    return <Auth onAuthSuccess={() => {}} />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
       
@@ -267,6 +338,7 @@ export default function App() {
           onSubscribe={() => {
             setIsPremium(true);
             setShowPremiumModal(false);
+            if (session?.user) supabase.from('profiles').update({ is_premium: true }).eq('id', session.user.id).then();
           }} 
         />
       )}
@@ -418,6 +490,16 @@ export default function App() {
                 setDifficulty={setDifficulty}
                 isPremium={isPremium}
                 onRequirePremium={() => setShowPremiumModal(true)}
+                aiGenerationCount={aiGenerationCount}
+                onAiGenerated={() => {
+                  setAiGenerationCount(prev => {
+                    const newCount = prev + 1;
+                    if (session?.user) {
+                      supabase.from('profiles').update({ ai_generation_count: newCount }).eq('id', session.user.id).then();
+                    }
+                    return newCount;
+                  });
+                }}
               />
             )}
           </main>

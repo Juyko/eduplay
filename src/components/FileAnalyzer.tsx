@@ -17,10 +17,12 @@ interface AnalyzerProps {
   isPremium?: boolean;
   onRequirePremium?: () => void;
   isDarkMode?: boolean;
+  aiGenerationCount?: number;
+  onAiGenerated?: () => void;
 }
 
 export default function FileAnalyzer({
-  questions, setQuestions, onLaunchGame, difficulty, setDifficulty, isPremium, onRequirePremium, isDarkMode
+  questions, setQuestions, onLaunchGame, difficulty, setDifficulty, isPremium, onRequirePremium, isDarkMode, aiGenerationCount = 0, onAiGenerated
 }: AnalyzerProps) {
   const { t, language } = useTranslation();
   const [inputText, setInputText] = useState<string>('');
@@ -53,8 +55,8 @@ export default function FileAnalyzer({
 
   const [aiProvider, setAiProvider] = useState<AIProvider>('groq');
 
-  const [groqKey, setGroqKey] = useState(() => localStorage.getItem('groq_key') || "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");
-  const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('gemini_key') || "AQ.Ab8RN6KqzhjVnUwqkEuoYlO9i3ZwVsnskW_Lb_Y1xlRTEZxA2Q");
+  const [groqKey, setGroqKey] = useState(() => localStorage.getItem('groq_key') || "");
+  const [geminiKey, setGeminiKey] = useState(() => localStorage.getItem('gemini_key') || "");
   const [showApiSettings, setShowApiSettings] = useState(false);
 
   const [aiGenerating, setAiGenerating] = useState(false);
@@ -66,8 +68,7 @@ export default function FileAnalyzer({
 
   const handleAIGenerate = async () => {
     if (!isPremium) {
-      const generatedCount = parseInt(localStorage.getItem('eduplay_ai_count') || '0');
-      if (generatedCount >= 3) {
+      if (aiGenerationCount >= 3) {
         setAiError(t('analyze.error.aiLimit'));
         if (onRequirePremium) onRequirePremium();
         return;
@@ -97,9 +98,8 @@ export default function FileAnalyzer({
       setQuestions(aiQuestions);
       setAiSuccess(`${aiQuestions.length} ${language === 'tr' ? 'özgün soru üretildi!' : 'unique questions generated!'}`);
       
-      if (!isPremium) {
-        const currentCount = parseInt(localStorage.getItem('eduplay_ai_count') || '0');
-        localStorage.setItem('eduplay_ai_count', (currentCount + 1).toString());
+      if (!isPremium && onAiGenerated) {
+        onAiGenerated();
       }
     } catch (err: any) {
       setAiError(err?.message || (language === 'tr' ? 'AI ile soru üretilemedi.' : 'Failed to generate questions with AI.'));
