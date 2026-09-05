@@ -8,6 +8,7 @@ interface AIOptions {
   difficulty: Difficulty;
   questionCount?: number;
   imageBase64?: string;
+  language?: string;
 }
 
 const SYSTEM_PROMPT = `Sen profesyonel bir eğitim içerik üretim sistemisin.
@@ -17,9 +18,8 @@ Görevin:
 2. Belgedeki konu başlıklarını, kavramları, formülleri ve öğrenme kazanımlarını çıkar.
 3. SADECE belgede bulunan bilgilerden yararlanarak sorular oluştur.
 4. Bilgi ekleme, konu uydurma veya belge dışı içerik üretme.
-5. Soruları MEB ve lise sınav formatına uygun hazırla.
+5. Soruları eğitim müfredatına ve sınav formatına uygun hazırla.
 6. Belgedeki cümleleri AYNEN kopyalama. Belge cümlesini soru veya seçenek olarak kullanma.
-7. Cevap her zaman Türkçe.
 
 SORU ÜRETİM KURALLARI:
 - Her soru için zorluk seviyesi: kolay | orta | zor
@@ -258,9 +258,14 @@ export async function generateQuestionsWithAI(documentText: string, options: AIO
   const limited = trimmed.slice(0, 10000);
   const count = options.questionCount || 10;
   const provider = PROVIDERS[options.provider];
+  
+  const langInstruction = options.language === 'en'
+    ? '\n\nCRITICAL: YOU MUST WRITE ALL QUESTIONS, OPTIONS, AND EXPLANATIONS IN ENGLISH. Do NOT use Turkish.'
+    : '\n\nÖNEMLİ: SORULARI, SEÇENEKLERİ VE AÇIKLAMALARI MUTLAKA TÜRKÇE YAZIN.';
 
   const userPrompt = `İstenen soru sayısı: ${count}
 Genel zorluk eğilimi: ${options.difficulty === 'EASY' ? 'kolay' : options.difficulty === 'EASY_MEDIUM' ? 'kolay-orta' : options.difficulty === 'HARD' ? 'zor' : options.difficulty === 'MEDIUM_HARD' ? 'orta-zor' : 'orta'}
+${langInstruction}
 
 LÜTFEN SADECE VE SADECE AŞAĞIDAKİ JSON FORMATINDA YANIT VER. 
 HİÇBİR AÇIKLAMA VEYA MARKDOWN KOD BLOĞU ( \`\`\`json ) KULLANMA.
@@ -291,7 +296,7 @@ ${limited}`;
   
   if (options.provider === 'gemini') {
     const url = `${provider.url}?key=${apiKey}`;
-    const parts: any[] = [{ text: SYSTEM_PROMPT + '\n\n' + userPrompt }];
+    const parts: any[] = [{ text: SYSTEM_PROMPT + langInstruction + '\n\n' + userPrompt }];
     
     if (options.imageBase64) {
       const match = options.imageBase64.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,(.*)/);
@@ -320,7 +325,7 @@ ${limited}`;
     // Groq logic
     const finalModel = provider.model;
     const finalMessages: any[] = [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: SYSTEM_PROMPT + langInstruction },
       { role: 'user', content: userPrompt }
     ];
 

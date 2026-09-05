@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ArrowLeft, Check, Lock, Unlock, KeyRound } from 'lucide-react';
+import { useTranslation } from '../utils/i18n';
 
 export const SKINS = [
   // DINO
@@ -42,12 +43,14 @@ interface Props {
   equipped: Record<string, string>;
   onBuy: (skinId: string, cost: number) => void;
   onEquip: (gameId: string, skinId: string) => void;
+  onBack: () => void;
   onUnlockAll?: () => void;
   onResetAll?: () => void;
   onUnlockBetMode?: () => void;
 }
 
 export default function Market({ coins, inventory, equipped, onBuy, onEquip, onBack, onUnlockAll, onResetAll, onUnlockBetMode }: Props) {
+  const { t } = useTranslation();
   const [adminCode, setAdminCode] = useState('');
   return (
     <div className="w-full max-w-7xl mx-auto flex flex-col items-center">
@@ -57,20 +60,23 @@ export default function Market({ coins, inventory, equipped, onBuy, onEquip, onB
           onClick={onBack}
           className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl text-slate-200 font-bold transition active:scale-95 shadow-lg border border-slate-700"
         >
-          <ArrowLeft className="w-5 h-5" /> Geri Dön
+          <ArrowLeft className="w-5 h-5" />
         </button>
-        <div className="flex items-center gap-2 bg-amber-500/20 px-4 py-2 rounded-xl border border-amber-500/30">
-          <span className="text-2xl">🪙</span>
-          <span className="text-xl font-black text-amber-400">{coins}</span>
+        <h2 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2 tracking-tight">
+          🛍️ {t('market.title')}
+        </h2>
+        <div className="flex items-center gap-2 bg-amber-500/20 border border-amber-500/50 px-4 py-2 rounded-xl">
+          <span className="text-amber-500 font-bold">{t('market.coins')}</span>
+          <span className="text-amber-400 font-black text-xl">{coins}</span>
           <span className="hidden sm:inline text-sm font-bold text-amber-500/80 uppercase">Jeton</span>
         </div>
       </div>
 
       <div className="w-full bg-slate-900/40 backdrop-blur-md rounded-3xl p-6 sm:p-10 border border-slate-700/50 shadow-2xl">
         <h2 className="text-3xl font-black text-white uppercase tracking-widest mb-2 flex items-center gap-3">
-          🛒 Kostüm Mağazası
+          {t('market.store.title')}
         </h2>
-        <p className="text-slate-400 mb-8">Soru çözerek kazandığın jetonlarla oyunlarını kişiselleştir.</p>
+        <p className="text-slate-400 mb-8">{t('market.store.desc')}</p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {SKINS.map((skin) => {
@@ -93,22 +99,22 @@ export default function Market({ coins, inventory, equipped, onBuy, onEquip, onB
                 {/* Body */}
                 <div className="p-5 bg-slate-900/80 flex-1 flex flex-col">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-lg text-white">{skin.name}</h3>
+                    <h3 className="font-bold text-lg text-white">{t(`skin.${skin.id}.name`)}</h3>
                     <div className="bg-slate-800 px-2 py-1 rounded text-xs font-bold text-slate-400">{skin.gameId}</div>
                   </div>
-                  <p className="text-sm text-slate-400 mb-6 flex-1">{skin.description}</p>
+                  <p className="text-sm text-slate-400 mb-6 flex-1">{t(`skin.${skin.id}.desc`)}</p>
 
                   {/* Action Button */}
                   {isEquipped ? (
                     <button disabled className="w-full py-3 rounded-xl bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30 flex justify-center items-center gap-2">
-                      <Check className="w-5 h-5" /> Kuşandın
+                      <Check className="w-5 h-5" /> {t('market.equipped')}
                     </button>
                   ) : isOwned ? (
                     <button 
                       onClick={() => onEquip(skin.gameId, skin.id)}
                       className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition active:scale-95 flex justify-center items-center gap-2 shadow-lg shadow-indigo-600/30"
                     >
-                      <Unlock className="w-5 h-5" /> Kullan
+                      <Unlock className="w-5 h-5" /> {t('market.equip')}
                     </button>
                   ) : (
                     <button 
@@ -117,7 +123,7 @@ export default function Market({ coins, inventory, equipped, onBuy, onEquip, onB
                       className={`w-full py-3 rounded-xl font-bold transition flex justify-center items-center gap-2 ${coins >= skin.price ? 'bg-amber-500 hover:bg-amber-400 text-slate-900 shadow-lg shadow-amber-500/30 active:scale-95' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}
                     >
                       {coins >= skin.price ? '🪙' : <Lock className="w-4 h-4" />} 
-                      {skin.price} Jeton'a Al
+                      {skin.price} {t('market.buy')}
                     </button>
                   )}
                 </div>
@@ -126,20 +132,19 @@ export default function Market({ coins, inventory, equipped, onBuy, onEquip, onB
           })}
         </div>
 
-        {/* Admin Unlock Area */}
         <div className="mt-12 p-6 bg-slate-950/50 rounded-2xl border border-slate-800 flex flex-col sm:flex-row items-center gap-4 justify-between">
           <div>
             <h4 className="font-bold text-slate-300 flex items-center gap-2 mb-1">
-              <KeyRound className="w-4 h-4" /> Gizli Kod
+              <KeyRound className="w-4 h-4" /> {t('market.admin.title')}
             </h4>
-            <p className="text-xs text-slate-500">Tüm kostümleri açmak için yönetici kodunu girin.</p>
+            <p className="text-xs text-slate-500">{t('market.admin.desc')}</p>
           </div>
           <div className="flex w-full sm:w-auto gap-2">
             <input 
               type="password" 
               value={adminCode}
               onChange={(e) => setAdminCode(e.target.value)}
-              placeholder="Şifre..." 
+              placeholder={t('market.admin.placeholder')} 
               className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white placeholder-slate-600 outline-none focus:border-indigo-500 w-full sm:w-48"
             />
             <button 
@@ -155,14 +160,14 @@ export default function Market({ coins, inventory, equipped, onBuy, onEquip, onB
                 } else if ((adminCode === 'BLACKJACK' || adminCode === 'DEATHGAME' || adminCode === 'BAHIS') && onUnlockBetMode) {
                   onUnlockBetMode();
                   setAdminCode('');
-                  alert('Özel Bahis Modu başarıyla açıldı!');
+                  alert(t('market.admin.success_bet'));
                 } else {
-                  alert('Hatalı kod!');
+                  alert(t('market.admin.error'));
                 }
               }}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-bold transition whitespace-nowrap"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-lg transition active:scale-95 flex-1 sm:flex-none whitespace-nowrap"
             >
-              Uygula
+              {t('market.admin.submit')}
             </button>
           </div>
         </div>

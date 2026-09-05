@@ -6,6 +6,7 @@ import {
   FileText, Plus, Trash2, Edit3, Save, Sparkles, Upload,
   CheckCircle, AlertCircle, FileJson, Filter, Shuffle, Loader2, Wand2
 } from 'lucide-react';
+import { useTranslation } from '../utils/i18n';
 
 interface AnalyzerProps {
   questions: Question[];
@@ -13,11 +14,15 @@ interface AnalyzerProps {
   onLaunchGame: () => void;
   difficulty: Difficulty;
   setDifficulty: (d: Difficulty) => void;
+  isPremium?: boolean;
+  onRequirePremium?: () => void;
+  isDarkMode?: boolean;
 }
 
 export default function FileAnalyzer({
-  questions, setQuestions, onLaunchGame, difficulty, setDifficulty
+  questions, setQuestions, onLaunchGame, difficulty, setDifficulty, isPremium, onRequirePremium, isDarkMode
 }: AnalyzerProps) {
+  const { t, language } = useTranslation();
   const [inputText, setInputText] = useState<string>('');
   const [selectedSample, setSelectedSample] = useState<number | null>(null);
   const [filterType, setFilterType] = useState<string>('ALL');
@@ -34,8 +39,10 @@ export default function FileAnalyzer({
 
   const handleLoadSample = (index: number) => {
     setSelectedSample(index);
-    setInputText(sampleTexts[index].text);
-    const parsed = extractQuestions(sampleTexts[index].text, difficulty);
+    const textData = sampleTexts[index].text;
+    const text = (textData as any)[language] || (textData as any)['tr'];
+    setInputText(text);
+    const parsed = extractQuestions(text, difficulty);
     setQuestions(parsed);
   };
 
@@ -58,8 +65,17 @@ export default function FileAnalyzer({
 
 
   const handleAIGenerate = async () => {
+    if (!isPremium) {
+      const generatedCount = parseInt(localStorage.getItem('eduplay_ai_count') || '0');
+      if (generatedCount >= 3) {
+        setAiError(t('analyze.error.aiLimit'));
+        if (onRequirePremium) onRequirePremium();
+        return;
+      }
+    }
+
     if (!inputText.trim() && !uploadedImageBase64) {
-      setAiError('Önce belge yükleyin veya metin yapıştırın.');
+      setAiError(t('analyze.error.emptyText'));
       return;
     }
     setAiGenerating(true);
@@ -75,12 +91,18 @@ export default function FileAnalyzer({
         apiKey: finalKey,
         difficulty,
         questionCount: aiQuestionCount,
-        imageBase64: uploadedImageBase64 || undefined
+        imageBase64: uploadedImageBase64 || undefined,
+        language
       });
       setQuestions(aiQuestions);
-      setAiSuccess(`${aiQuestions.length} özgün soru üretildi!`);
+      setAiSuccess(`${aiQuestions.length} ${language === 'tr' ? 'özgün soru üretildi!' : 'unique questions generated!'}`);
+      
+      if (!isPremium) {
+        const currentCount = parseInt(localStorage.getItem('eduplay_ai_count') || '0');
+        localStorage.setItem('eduplay_ai_count', (currentCount + 1).toString());
+      }
     } catch (err: any) {
-      setAiError(err?.message || 'AI ile soru üretilemedi.');
+      setAiError(err?.message || (language === 'tr' ? 'AI ile soru üretilemedi.' : 'Failed to generate questions with AI.'));
     } finally {
       setAiGenerating(false);
     }
@@ -306,9 +328,9 @@ export default function FileAnalyzer({
   };
 
   const typeMeta: Record<string, { color: string; icon: string; label: string }> = {
-    MULTIPLE_CHOICE: { color: 'amber', icon: '📝', label: 'Çoktan Seçmeli' },
-    TRUE_FALSE: { color: 'sky', icon: '⚖️', label: 'Doğru/Yanlış' },
-    MATCHING: { color: 'purple', icon: '✍️', label: 'Eşleştirme' }
+    MULTIPLE_CHOICE: { color: 'amber', icon: '📝', label: t('analyze.filter.multiple') },
+    TRUE_FALSE: { color: 'sky', icon: '⚖️', label: t('analyze.filter.tf') },
+    MATCHING: { color: 'purple', icon: '✍️', label: t('analyze.filter.match') }
   };
 
   return (
@@ -318,16 +340,16 @@ export default function FileAnalyzer({
         <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl p-5 border border-slate-700/50 shadow-xl flex flex-col gap-4">
           <div>
             <h2 className="text-lg font-black text-white tracking-wide flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-amber-400" /> 1. Veri Kaynağı & Zorluk
+              <Sparkles className="w-5 h-5 text-amber-400" /> {t('analyze.source.title')}
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
-              Hazır bir ders dosyası seçin ya da kendi dosyanızı yükleyin.
+              {t('analyze.source.desc')}
             </p>
           </div>
 
           {/* Difficulty Selector */}
           <div>
-            <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Zorluk Seviyesi</label>
+            <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t('analyze.diff.label')}</label>
             <div className="grid grid-cols-5 gap-1 mt-1.5">
               {(['EASY', 'EASY_MEDIUM', 'NORMAL', 'MEDIUM_HARD', 'HARD'] as Difficulty[]).map(d => {
                 const colors: Record<string, string> = {
@@ -338,11 +360,11 @@ export default function FileAnalyzer({
                   HARD: 'red'
                 };
                 const labels: Record<string, string> = {
-                  EASY: '😊 Kolay',
-                  EASY_MEDIUM: 'Kolay-Orta',
-                  NORMAL: '🔥 Orta',
-                  MEDIUM_HARD: 'Orta-Zor',
-                  HARD: '💀 Zor'
+                  EASY: t('diff.easy'),
+                  EASY_MEDIUM: t('diff.easy_medium'),
+                  NORMAL: t('diff.normal'),
+                  MEDIUM_HARD: t('diff.medium_hard'),
+                  HARD: t('diff.hard')
                 };
                 const c = colors[d];
                 return (
@@ -372,7 +394,7 @@ export default function FileAnalyzer({
                   }`}
               >
                 <div className="text-2xl">{sample.icon || <FileText className="w-5 h-5" />}</div>
-                <h4 className="text-xs font-bold text-slate-200 leading-tight">{sample.title}</h4>
+                <h4 className="text-xs font-bold text-slate-200 leading-tight">{t(['sample.space', 'sample.tech', 'sample.history', 'sample.bio', 'sample.physics', 'sample.geo'][idx])}</h4>
               </button>
             ))}
           </div>
@@ -382,7 +404,7 @@ export default function FileAnalyzer({
               <div className="w-full border-t border-slate-800/60"></div>
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-slate-900 px-3 text-slate-500 font-medium">VEYA KENDİ DOSYANIZI</span>
+              <span className="bg-slate-900 px-3 text-slate-500 font-medium">{t('analyze.or.own')}</span>
             </div>
           </div>
 
@@ -400,9 +422,9 @@ export default function FileAnalyzer({
               <Upload className="w-5 h-5 text-indigo-400 mb-1" />
             )}
             <span className="text-xs font-semibold text-slate-300">
-              {uploading ? 'Dosya okunuyor...' : uploadFileName || 'Dosya Seç (PDF, Word, Fotoğraf)'}
+              {uploading ? t('analyze.ai.generating.wait') : uploadFileName || t('analyze.upload.button')}
             </span>
-            <span className="text-[10px] text-slate-500 mt-0.5">PDF, DOCX ve Fotoğraflar (.jpg, .png) desteklenir</span>
+            <span className="text-[10px] text-slate-500 mt-0.5">{t('analyze.upload.desc')}</span>
             <input type="file" accept=".txt,.md,.csv,.json,.pdf,.docx,.jpg,.jpeg,.png,.webp,.bmp" onChange={handleFileUpload} className="hidden" />
           </label>
 
@@ -421,7 +443,7 @@ export default function FileAnalyzer({
           )}
 
           <textarea
-            placeholder="Veya buraya metin yapıştırın..."
+            placeholder={t('analyze.upload.title')}
             rows={4}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
@@ -433,7 +455,7 @@ export default function FileAnalyzer({
             disabled={!inputText.trim()}
             className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white font-bold p-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2"
           >
-            <Sparkles className="w-4 h-4" /> Hızlı Soru Çıkart (Offline)
+            <Sparkles className="w-4 h-4" /> {t('analyze.extract.fast')}
           </button>
 
           {/* AI GENERATOR (Ücretsiz, Google'sız) */}
@@ -443,21 +465,21 @@ export default function FileAnalyzer({
             </div>
             <div className="relative flex justify-center text-xs">
               <span className="bg-slate-900 px-3 text-purple-400 font-bold flex items-center gap-1">
-                <Wand2 className="w-3 h-3" /> AI İLE ÜRET (ÜCRETSİZ)
+                <Wand2 className="w-3 h-3" /> {t('analyze.ai.settings')}
               </span>
             </div>
           </div>
 
           <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-xl p-3 flex flex-col gap-2.5">
             <p className="text-[11px] text-slate-300 leading-relaxed">
-              🤖 AI belgeyi okur, anlar ve <strong className="text-purple-300">grafik/tablo/formül</strong> içeren özgün sorular üretir.
+              {t('analyze.ai.desc')}
             </p>
 
 
 
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-400 font-medium">Model:</span>
+                <span className="text-xs text-slate-400 font-medium">{t('analyze.ai.model')}</span>
                 <select
                   value={aiProvider}
                   onChange={(e) => setAiProvider(e.target.value as AIProvider)}
@@ -468,7 +490,7 @@ export default function FileAnalyzer({
                 </select>
               </div>
               <div className="flex items-center justify-between mt-1">
-                <span className="text-xs text-slate-400 font-medium">Soru Sayısı:</span>
+                <span className="text-xs text-slate-400 font-medium">{t('analyze.ai.count')}</span>
                 <select
                   value={aiQuestionCount}
                   onChange={(e) => setAiQuestionCount(Number(e.target.value))}
@@ -482,12 +504,12 @@ export default function FileAnalyzer({
               </div>
               {uploadedImageBase64 && aiProvider === 'gemini' && (
                 <span className="text-[10px] text-pink-400 font-medium leading-tight">
-                  Gemini Vision ile fotoğraf doğrudan analiz edilecek.
+                  {t('analyze.ai.gemini.vision')}
                 </span>
               )}
               {uploadedImageBase64 && aiProvider === 'groq' && (
                 <span className="text-[10px] text-red-400 font-medium leading-tight">
-                  Uyarı: Groq modelinin fotoğraf okuma (Vision) özelliği Google tarafından kapatıldığı için, fotoğraflarda hata alabilirsiniz. Fotoğraflar için lütfen Gemini'yi seçin.
+                  {t('analyze.ai.groq.warn')}
                 </span>
               )}
             </div>
@@ -498,17 +520,17 @@ export default function FileAnalyzer({
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white font-bold p-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2 mt-2"
             >
               {aiGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wand2 className="w-4 h-4" />}
-              {aiGenerating ? 'AI Üretiyor...' : 'AI ile Soru Üret'}
+              {aiGenerating ? t('analyze.ai.generating') : t('analyze.ai.generate.button')}
             </button>
 
             <button onClick={() => setShowApiSettings(!showApiSettings)} className="text-[10px] text-slate-400 hover:text-slate-300 underline mt-1 text-center w-full">
-              ⚙️ Kota dolduysa kendi API anahtarınızı girin
+              {t('analyze.ai.custom.api')}
             </button>
 
             {showApiSettings && (
               <div className="flex flex-col gap-2 p-3 bg-slate-900/80 rounded-xl border border-slate-700/50 mt-1">
                 <div>
-                  <label className="text-[10px] text-slate-400 font-bold mb-1 block">Groq API Key (Llama 3.3 için)</label>
+                  <label className="text-[10px] text-slate-400 font-bold mb-1 block">{t('analyze.ai.groq.key')}</label>
                   <input 
                     type="password" 
                     value={groqKey} 
@@ -518,7 +540,7 @@ export default function FileAnalyzer({
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 font-bold mb-1 block">Gemini API Key (Fotoğraflar için)</label>
+                  <label className="text-[10px] text-slate-400 font-bold mb-1 block">{t('analyze.ai.gemini.key')}</label>
                   <input 
                     type="password" 
                     value={geminiKey} 
@@ -527,7 +549,7 @@ export default function FileAnalyzer({
                     className="w-full bg-slate-800 border border-slate-700 rounded-md px-2 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
                   />
                 </div>
-                <span className="text-[9px] text-slate-500 mt-1 leading-tight">Bu anahtarlar tarayıcınızda (localStorage) şifresiz saklanır, sunucuya gönderilmez. Sadece ücretsiz limitler dolduğunda (429 Hatası) değiştirmeniz önerilir.</span>
+                <span className="text-[9px] text-slate-500 mt-1 leading-tight">{t('analyze.ai.api.warn')}</span>
               </div>
             )}
 
@@ -547,22 +569,22 @@ export default function FileAnalyzer({
         {/* MANUAL ADD */}
         <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl p-5 border border-slate-700/50 shadow-xl flex flex-col gap-3">
           <h3 className="text-sm font-black text-white tracking-wide uppercase flex items-center gap-2">
-            <Plus className="w-4 h-4 text-emerald-400" /> Manuel Soru Ekle
+            <Plus className="w-4 h-4 text-emerald-400" /> {t('analyze.manual.title')}
           </h3>
 
           <input
             type="text"
-            placeholder="Soru metni..."
+            placeholder={t('analyze.manual.placeholder')}
             value={newQuestionText}
             onChange={(e) => setNewQuestionText(e.target.value)}
             className="p-2 text-xs bg-slate-800/40 text-slate-100 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-lg focus:outline-none"
           />
 
           <div className="grid grid-cols-2 gap-2">
-            <input type="text" placeholder="Doğru Cevap" value={newAnswer} onChange={e => setNewAnswer(e.target.value)} className="p-2 text-xs bg-slate-800/40 text-emerald-200 border border-slate-800 focus:border-emerald-500 focus:outline-none rounded-lg" />
-            <input type="text" placeholder="Yanlış 1" value={newDistractor1} onChange={e => setNewDistractor1(e.target.value)} className="p-2 text-xs bg-slate-800/40 text-red-200 border border-slate-800 focus:border-emerald-500 focus:outline-none rounded-lg" />
-            <input type="text" placeholder="Yanlış 2" value={newDistractor2} onChange={e => setNewDistractor2(e.target.value)} className="p-2 text-xs bg-slate-800/40 text-red-200 border border-slate-800 focus:border-emerald-500 focus:outline-none rounded-lg" />
-            <input type="text" placeholder="Yanlış 3" value={newDistractor3} onChange={e => setNewDistractor3(e.target.value)} className="p-2 text-xs bg-slate-800/40 text-red-200 border border-slate-800 focus:border-emerald-500 focus:outline-none rounded-lg" />
+            <input type="text" placeholder={t('analyze.manual.correct')} value={newAnswer} onChange={e => setNewAnswer(e.target.value)} className="p-2 text-xs bg-slate-800/40 text-emerald-200 border border-slate-800 focus:border-emerald-500 focus:outline-none rounded-lg" />
+            <input type="text" placeholder={t('analyze.manual.wrong1')} value={newDistractor1} onChange={e => setNewDistractor1(e.target.value)} className="p-2 text-xs bg-slate-800/40 text-red-200 border border-slate-800 focus:border-emerald-500 focus:outline-none rounded-lg" />
+            <input type="text" placeholder={t('analyze.manual.wrong2')} value={newDistractor2} onChange={e => setNewDistractor2(e.target.value)} className="p-2 text-xs bg-slate-800/40 text-red-200 border border-slate-800 focus:border-emerald-500 focus:outline-none rounded-lg" />
+            <input type="text" placeholder={t('analyze.manual.wrong3')} value={newDistractor3} onChange={e => setNewDistractor3(e.target.value)} className="p-2 text-xs bg-slate-800/40 text-red-200 border border-slate-800 focus:border-emerald-500 focus:outline-none rounded-lg" />
           </div>
 
           <button
@@ -570,7 +592,7 @@ export default function FileAnalyzer({
             disabled={!newQuestionText || !newAnswer}
             className="w-full bg-emerald-600/80 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold p-2 rounded-lg transition text-xs flex items-center justify-center gap-1.5"
           >
-            <CheckCircle className="w-4 h-4" /> Soru Ekle
+            <CheckCircle className="w-4 h-4" /> {t('analyze.manual.add')}
           </button>
         </div>
       </div>
@@ -580,11 +602,12 @@ export default function FileAnalyzer({
         <div className="bg-slate-900/40 backdrop-blur-md rounded-2xl p-5 border border-slate-700/50 shadow-xl flex flex-col h-full">
           <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-3 gap-2 flex-wrap">
             <div>
-              <h2 className="text-lg font-black text-white tracking-wide flex items-center gap-2">
-                <FileJson className="w-5 h-5 text-indigo-400" /> Sorular ({questions.length})
-              </h2>
+              <h3 className="text-lg font-black text-white tracking-wide flex items-center gap-2">
+                <FileText className="w-5 h-5 text-indigo-400" /> 2. {t('analyze.list.title')}
+                <span className="bg-indigo-500 text-white text-xs px-2 py-0.5 rounded-full ml-1">{questions.length}</span>
+              </h3>
               <p className="text-xs text-slate-400 mt-0.5">
-                Oyunda öldüğünde bu sorulardan biri seni kurtarabilir.
+                {t('analyze.list.subtitle')}
               </p>
             </div>
             <div className="flex gap-2">
@@ -638,12 +661,9 @@ export default function FileAnalyzer({
           )}
 
           {filteredQuestions.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 border border-dashed border-slate-800 rounded-xl text-center bg-slate-800/10 min-h-[300px]">
-              <AlertCircle className="w-12 h-12 text-slate-600 animate-pulse mb-3" />
-              <h4 className="text-base font-bold text-slate-400">Henüz Soru Yok</h4>
-              <p className="text-xs text-slate-500 max-w-sm mt-1">
-                Soldaki örneklerden birini seçin veya kendi metninizi yapıştırın.
-              </p>
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-500 gap-2 border-2 border-dashed border-slate-800/50 rounded-xl m-2 bg-slate-800/20">
+              <FileText className="w-8 h-8 opacity-50" />
+              <p className="text-sm">{t('analyze.list.empty')}</p>
             </div>
           ) : (
             <div className="flex-1 flex flex-col">
@@ -658,7 +678,7 @@ export default function FileAnalyzer({
                         <div className="flex-1 flex flex-col gap-2">
                           <input type="text" value={editQuestionText} onChange={e => setEditQuestionText(e.target.value)} className="w-full p-2 bg-slate-900 border border-slate-700 text-slate-100 rounded-lg text-xs" />
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-slate-500 uppercase font-bold">Cevap:</span>
+                            <span className="text-[10px] font-bold text-slate-500 uppercase">{t('analyze.list.view')}</span>
                             <input type="text" value={editAnswer} onChange={e => setEditAnswer(e.target.value)} className="p-1.5 bg-slate-900 border border-slate-700 text-emerald-200 rounded-lg text-xs flex-1" />
                           </div>
                         </div>
@@ -693,13 +713,11 @@ export default function FileAnalyzer({
                             <Save className="w-4 h-4" />
                           </button>
                         ) : (
-                          <button onClick={() => handleStartEditing(q)} className="p-1.5 text-indigo-400 hover:bg-indigo-500/10 rounded-lg">
-                            <Edit3 className="w-4 h-4" />
-                          </button>
+                          <>
+                            <button onClick={() => handleStartEditing(q)} className="text-indigo-400 hover:text-indigo-300 p-1 flex items-center gap-1"><Edit3 className="w-3 h-3" /> {t('analyze.list.edit')}</button>
+                            <button onClick={() => handleDeleteQuestion(q.id)} className="text-red-400 hover:text-red-300 p-1 flex items-center gap-1"><Trash2 className="w-3 h-3" /> {t('analyze.list.delete')}</button>
+                          </>
                         )}
-                        <button onClick={() => handleDeleteQuestion(q.id)} className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
                       </div>
                     </div>
                   );

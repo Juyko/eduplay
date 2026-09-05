@@ -11,7 +11,9 @@ import BombGame from './components/BombGame';
 import BlackjackGame from './components/BlackjackGame';
 import Market, { SKINS } from './components/Market';
 import { Question, Difficulty } from './utils/questionExtractor';
-import { Gamepad2, Play, Sun, Moon, ShoppingCart, Lock, Unlock, Skull, Coins, Flame, Trophy, AlertTriangle, KeyRound } from 'lucide-react';
+import { Gamepad2, Play, Sun, Moon, ShoppingCart, Skull, AlertTriangle, Globe, Crown } from 'lucide-react';
+import { useTranslation } from './utils/i18n';
+import PremiumModal from './components/PremiumModal';
 
 type GameType = 'SPACE' | 'DINO' | 'FLAPPY' | 'SNAKE' | 'BREAKOUT' | 'PONG' | 'TETRIS' | 'BOMB';
 
@@ -22,15 +24,15 @@ interface GameOption {
   description: string;
 }
 
-const GAMES: GameOption[] = [
-  { id: 'SPACE', name: 'Uzay Macerası', emoji: '🚀', description: 'Asteroidleri vur' },
-  { id: 'DINO', name: 'Dinozor Koşusu', emoji: '🦖', description: 'Engelleri zıpla' },
-  { id: 'FLAPPY', name: 'Kanatlı Kuş', emoji: '🐦', description: 'Borulardan geç' },
-  { id: 'SNAKE', name: 'Yılan Oyunu', emoji: '🐍', description: 'Yemleri topla' },
-  { id: 'BREAKOUT', name: 'Tuğla Kırma', emoji: '🧱', description: 'Tuğlaları yık' },
-  { id: 'PONG', name: 'Pong', emoji: '🏓', description: 'Rakibi yen' },
-  { id: 'TETRIS', name: 'Tetris', emoji: '🧩', description: 'Satır tamamla' },
-  { id: 'BOMB', name: 'Bomba İmha', emoji: '💣', description: 'Zamana karşı yarış' },
+const getGames = (t: (key: string) => string): GameOption[] => [
+  { id: 'SPACE', name: t('game.SPACE.name'), emoji: '🚀', description: t('game.SPACE.desc') },
+  { id: 'DINO', name: t('game.DINO.name'), emoji: '🦖', description: t('game.DINO.desc') },
+  { id: 'FLAPPY', name: t('game.FLAPPY.name'), emoji: '🐦', description: t('game.FLAPPY.desc') },
+  { id: 'SNAKE', name: t('game.SNAKE.name'), emoji: '🐍', description: t('game.SNAKE.desc') },
+  { id: 'BREAKOUT', name: t('game.BREAKOUT.name'), emoji: '🧱', description: t('game.BREAKOUT.desc') },
+  { id: 'PONG', name: t('game.PONG.name'), emoji: '🏓', description: t('game.PONG.desc') },
+  { id: 'TETRIS', name: t('game.TETRIS.name'), emoji: '🧩', description: t('game.TETRIS.desc') },
+  { id: 'BOMB', name: t('game.BOMB.name'), emoji: '💣', description: t('game.BOMB.desc') },
 ];
 
 const GAME_COLORS: Record<GameType, string> = {
@@ -92,7 +94,14 @@ const FALLBACK_QUESTIONS: Question[] = [
 ];
 
 export default function App() {
+  const { t, language, setLanguage } = useTranslation();
   const [view, setView] = useState<'ANALYZE' | 'GAME' | 'MARKET' | 'BET_MENU'>('ANALYZE');
+
+  const GAMES = getGames(t);
+
+  // Premium & i18n states
+  const [isPremium, setIsPremium] = useState<boolean>(false);
+  const [showPremiumModal, setShowPremiumModal] = useState<boolean>(false);
 
   // Bet mode state
   const [isBetModeUnlocked, setIsBetModeUnlocked] = useState<boolean>(false);
@@ -245,8 +254,23 @@ export default function App() {
     }
   };
 
+  const toggleLanguage = () => {
+    setLanguage(language === 'tr' ? 'en' : 'tr');
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased selection:bg-indigo-500 selection:text-white">
+      
+      {showPremiumModal && (
+        <PremiumModal 
+          onClose={() => setShowPremiumModal(false)} 
+          onSubscribe={() => {
+            setIsPremium(true);
+            setShowPremiumModal(false);
+          }} 
+        />
+      )}
+
       {/* Background decoration */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden select-none z-0">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/10 rounded-full blur-[120px]" />
@@ -262,34 +286,69 @@ export default function App() {
             </div>
             <div>
               <h1 className="text-sm font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300">
-                EduPlay Arcade
+                {t('app.title')}
               </h1>
               <p className="text-[9px] font-bold text-slate-500 tracking-wider uppercase">
-                7 Oyun • Akıllı Soru Üretici
+                {t('app.subtitle')}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={() => setShowPremiumModal(true)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
+                isPremium 
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/20' 
+                  : 'bg-slate-800 text-amber-400 hover:bg-slate-700 border border-amber-500/30'
+              }`}
+            >
+              <Crown className="w-4 h-4" />
+              <span className="hidden sm:inline">{isPremium ? 'Premium' : t('app.premium.button')}</span>
+            </button>
+
+            <button
+              onClick={toggleLanguage}
+              className="p-2 sm:p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 transition border border-slate-700/50 shadow-inner text-slate-300 cursor-pointer"
+              title={language === 'tr' ? 'Switch to English' : 'Türkçeye Geç'}
+            >
+              <Globe className="w-4 h-4 text-sky-400" />
+            </button>
             {view !== 'MARKET' && view !== 'GAME' && isBetModeUnlocked && (
               <button
                 onClick={() => setView('BET_MENU')}
                 className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-rose-900/80 to-red-950/85 hover:from-rose-800 hover:to-red-900 border border-rose-800/60 hover:border-red-700/60 px-3 sm:px-4 py-2 rounded-xl transition shadow-[0_0_15px_rgba(239,68,68,0.25)] text-red-300 font-extrabold text-xs sm:text-sm cursor-pointer"
               >
                 <Skull className="w-4 h-4 text-red-400 animate-pulse shrink-0" />
-                <span>Bahis Modu</span>
+                <span className="hidden sm:inline">{t('app.betmode.active')}</span>
               </button>
             )}
-            {view !== 'MARKET' && (
-              <button
-                onClick={() => setView('MARKET')}
-                className="flex items-center gap-1.5 sm:gap-2 bg-slate-800/80 hover:bg-slate-700 px-3 sm:px-4 py-2 rounded-xl transition shadow-inner border border-slate-700/50 cursor-pointer"
-              >
-                <div className="text-amber-400 font-black text-sm sm:text-base flex items-center gap-1">
-                  <span>🪙</span> {coins}
-                </div>
-                <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-slate-300 ml-1" />
-              </button>
-            )}
+            <button
+              onClick={() => setView('ANALYZE')}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                view === 'ANALYZE' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              <Gamepad2 className="w-4 h-4" />
+              {t('app.tab.analyze')}
+            </button>
+            <button
+              onClick={() => setView('GAME')}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                view === 'GAME' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              <Play className="w-4 h-4" />
+              {t('app.tab.games')}
+            </button>
+            <button
+              onClick={() => setView('MARKET')}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                view === 'MARKET' ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+              }`}
+            >
+              <ShoppingCart className="w-4 h-4" />
+              {t('app.tab.market')}
+            </button>
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className="p-2 sm:p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 transition border border-slate-700/50 shadow-inner text-slate-300 cursor-pointer"
@@ -350,13 +409,17 @@ export default function App() {
           )}
 
           <main className="relative z-10 flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 select-none">
-            <FileAnalyzer
-              questions={questions}
-              setQuestions={setQuestions}
-              onLaunchGame={() => setView('GAME')}
-              difficulty={difficulty}
-              setDifficulty={setDifficulty}
-            />
+            {view === 'ANALYZE' && (
+              <FileAnalyzer
+                questions={questions}
+                setQuestions={setQuestions}
+                onLaunchGame={() => setView('GAME')}
+                difficulty={difficulty}
+                setDifficulty={setDifficulty}
+                isPremium={isPremium}
+                onRequirePremium={() => setShowPremiumModal(true)}
+              />
+            )}
           </main>
         </>
       )}

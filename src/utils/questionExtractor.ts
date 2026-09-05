@@ -531,65 +531,117 @@ export const sampleTexts = [
   {
     title: 'Güneş Sistemi',
     icon: '🪐',
-    text: `[
+    text: {
+      tr: `[
       {"question": "Güneş Sistemi'ndeki en büyük gezegen aşağıdakilerden hangisidir?", "options": ["Jüpiter", "Satürn", "Uranüs", "Neptün"], "answer": "Jüpiter", "difficulty": "EASY", "hint": "Kütlesi diğer tüm gezegenlerin toplamından daha fazladır."},
       {"question": "Hangisi Güneş'e en yakın gezegendir ve aşırı sıcaklık değişimleri gösterir?", "options": ["Merkür", "Venüs", "Mars", "Dünya"], "answer": "Merkür", "difficulty": "EASY", "hint": "Yüzey sıcaklığı 430 dereceye kadar çıkabilir."},
       {"question": "Kızıl Gezegen olarak adlandırılan ve yüzeyi demir oksit kaplı olan gezegen hangisidir?", "options": ["Mars", "Venüs", "Satürn", "Merkür"], "answer": "Mars", "difficulty": "NORMAL", "hint": "Üzerinde devasa volkanlar bulunur ancak aktif değildir."},
       {"question": "Uranüs gezegeninin en belirgin dönme özelliği nedir?", "options": ["98 derece eğiklik ile yan yatmış dönme", "Çok hızlı dönme", "Ters yönde dönme", "Halkasız dönme"], "answer": "98 derece eğiklik ile yan yatmış dönme", "difficulty": "HARD", "hint": "Güneş etrafında varil gibi yuvarlanarak döner."},
       {"question": "Pluto hangi tarihte 'cüce gezegen' statüsüne indirilmiştir?", "options": ["2006", "2001", "2010", "1998"], "answer": "2006", "difficulty": "NORMAL"},
       {"question": "Güneş Sistemi Samanyolu Galaksisi'nin hangi kolunda yer alır?", "options": ["Orion Kolu", "Perseus Kolu", "Yay Kolu", "Kuğu Kolu"], "answer": "Orion Kolu", "difficulty": "HARD"}
+    ]`,
+      en: `[
+      {"question": "What is the largest planet in the Solar System?", "options": ["Jupiter", "Saturn", "Uranus", "Neptune"], "answer": "Jupiter", "difficulty": "EASY", "hint": "Its mass is more than all other planets combined."},
+      {"question": "Which planet is closest to the Sun and has extreme temperature changes?", "options": ["Mercury", "Venus", "Mars", "Earth"], "answer": "Mercury", "difficulty": "EASY", "hint": "Surface temperature can reach 430 degrees."},
+      {"question": "Which planet is called the Red Planet and is covered with iron oxide?", "options": ["Mars", "Venus", "Saturn", "Mercury"], "answer": "Mars", "difficulty": "NORMAL", "hint": "It has huge volcanoes but they are not active."},
+      {"question": "What is the most distinct rotational feature of Uranus?", "options": ["Rotating on its side with a 98-degree tilt", "Very fast rotation", "Retrograde rotation", "Rotation without rings"], "answer": "Rotating on its side with a 98-degree tilt", "difficulty": "HARD", "hint": "It rolls around the Sun like a barrel."},
+      {"question": "In what year was Pluto demoted to 'dwarf planet' status?", "options": ["2006", "2001", "2010", "1998"], "answer": "2006", "difficulty": "NORMAL"},
+      {"question": "In which arm of the Milky Way Galaxy is the Solar System located?", "options": ["Orion Arm", "Perseus Arm", "Sagittarius Arm", "Cygnus Arm"], "answer": "Orion Arm", "difficulty": "HARD"}
     ]`
+    }
   },
   {
     title: 'Yapay Zeka & Teknoloji',
     icon: '🤖',
-    text: `[
+    text: {
+      tr: `[
       {"question": "Bileşen tabanlı mimari ve tek yönlü veri akışını benimseyen kütüphane hangisidir?", "options": ["React", "Vue", "Angular", "Svelte"], "answer": "React", "difficulty": "EASY"},
       {"question": "Hızlı derleme süreleri sunan ESBuild tabanlı yeni nesil araç zinciri nedir?", "options": ["Vite", "Webpack", "Babel", "Gulp"], "answer": "Vite", "difficulty": "NORMAL"},
       {"question": "Aşağıdakilerden hangisi JavaScript'e statik tip güvenliği ekleyen Microsoft dilidir?", "options": ["TypeScript", "CoffeeScript", "Dart", "Rust"], "answer": "TypeScript", "difficulty": "EASY"},
       {"question": "Dağıtık mutabakat ve kriptografik hash zinciri kullanan merkeziyetsiz teknoloji nedir?", "options": ["Blockchain", "Cloud Computing", "Siber Güvenlik", "Büyük Veri"], "answer": "Blockchain", "difficulty": "HARD"},
       {"question": "Turing makinesi teorisi temelinde çalışan çözüm prosedürleri ne olarak adlandırılır?", "options": ["Algoritmalar", "Modeller", "Sanallaştırma", "Veri Yapıları"], "answer": "Algoritmalar", "difficulty": "NORMAL"}
+    ]`,
+      en: `[
+      {"question": "Which library adopts component-based architecture and one-way data flow?", "options": ["React", "Vue", "Angular", "Svelte"], "answer": "React", "difficulty": "EASY"},
+      {"question": "What is the next-generation toolchain based on ESBuild offering fast compilation times?", "options": ["Vite", "Webpack", "Babel", "Gulp"], "answer": "Vite", "difficulty": "NORMAL"},
+      {"question": "Which of the following is a Microsoft language that adds static type safety to JavaScript?", "options": ["TypeScript", "CoffeeScript", "Dart", "Rust"], "answer": "TypeScript", "difficulty": "EASY"},
+      {"question": "What is the decentralized technology using distributed consensus and cryptographic hash chains?", "options": ["Blockchain", "Cloud Computing", "Cyber Security", "Big Data"], "answer": "Blockchain", "difficulty": "HARD"},
+      {"question": "What are the solution procedures based on the Turing machine theory called?", "options": ["Algorithms", "Models", "Virtualization", "Data Structures"], "answer": "Algorithms", "difficulty": "NORMAL"}
     ]`
+    }
   },
   {
     title: 'Tarih ve Uygarlıklar',
     icon: '🏛️',
-    text: `[
+    text: {
+      tr: `[
       {"question": "Mezopotamya'da çivi yazısını bularak tarihi çağları başlatan uygarlık hangisidir?", "options": ["Sümerler", "Akadlar", "Asurlar", "Babiller"], "answer": "Sümerler", "difficulty": "EASY"},
       {"question": "Matbaanın 1440 yılında Avrupa'da geliştirilmesini sağlayan mucit kimdir?", "options": ["Gutenberg", "Leonardo da Vinci", "Galileo", "Newton"], "answer": "Gutenberg", "difficulty": "NORMAL"},
       {"question": "Türkiye Cumhuriyeti hangi yılda ilan edilmiştir?", "options": ["1923", "1920", "1919", "1924"], "answer": "1923", "difficulty": "EASY"},
       {"question": "Babil İmparatorluğu döneminde yazılan ünlü antik kanunlar hangisidir?", "options": ["Hammurabi Kanunları", "On İki Levha Kanunları", "Urkagina Kanunları", "Justinianus Kanunları"], "answer": "Hammurabi Kanunları", "difficulty": "HARD"},
       {"question": "Osmanlı Devleti hangi yılda İstanbul'u fethetmiştir?", "options": ["1453", "1299", "1517", "1402"], "answer": "1453", "difficulty": "EASY"}
+    ]`,
+      en: `[
+      {"question": "Which civilization started historical ages by inventing cuneiform in Mesopotamia?", "options": ["Sumerians", "Akkadians", "Assyrians", "Babylonians"], "answer": "Sumerians", "difficulty": "EASY"},
+      {"question": "Who is the inventor that developed the printing press in Europe in 1440?", "options": ["Gutenberg", "Leonardo da Vinci", "Galileo", "Newton"], "answer": "Gutenberg", "difficulty": "NORMAL"},
+      {"question": "In what year was the Republic of Turkey proclaimed?", "options": ["1923", "1920", "1919", "1924"], "answer": "1923", "difficulty": "EASY"},
+      {"question": "Which are the famous ancient laws written during the Babylonian Empire?", "options": ["Code of Hammurabi", "Law of the Twelve Tables", "Code of Urukagina", "Code of Justinian"], "answer": "Code of Hammurabi", "difficulty": "HARD"},
+      {"question": "In what year did the Ottoman Empire conquer Istanbul?", "options": ["1453", "1299", "1517", "1402"], "answer": "1453", "difficulty": "EASY"}
     ]`
+    }
   },
   {
     title: 'Biyoloji - Hücre',
     icon: '🧬',
-    text: `[
+    text: {
+      tr: `[
       {"question": "Hücrenin ihtiyaç duyduğu ATP enerjisini üreten organel hangisidir?", "options": ["Mitokondri", "Ribozom", "Kloroplast", "Lizozom"], "answer": "Mitokondri", "difficulty": "EASY"},
       {"question": "Bitki hücrelerinde fotosentez yaparak besin ve oksijen üreten yapı hangisidir?", "options": ["Kloroplast", "Golgi aygıtı", "Koful", "Sentrozom"], "answer": "Kloroplast", "difficulty": "EASY"},
       {"question": "Hücrede protein sentezinin gerçekleştiği en küçük organel hangisidir?", "options": ["Ribozom", "Mitokondri", "Lizozom", "Sentrozom"], "answer": "Ribozom", "difficulty": "NORMAL"},
       {"question": "DNA molekülünün sarmal yapısını 1953 yılında keşfeden bilim insanları kimlerdir?", "options": ["Watson ve Crick", "Mendel ve Darwin", "Pasteur ve Koch", "Hooke ve Brown"], "answer": "Watson ve Crick", "difficulty": "HARD"},
       {"question": "Hücrenin kontrol ve yönetim merkezi olan yapı aşağıdakilerden hangisidir?", "options": ["Çekirdek", "Sitoplazma", "Hücre Zarı", "Çeper"], "answer": "Çekirdek", "difficulty": "EASY"}
+    ]`,
+      en: `[
+      {"question": "Which organelle produces the ATP energy needed by the cell?", "options": ["Mitochondria", "Ribosome", "Chloroplast", "Lysosome"], "answer": "Mitochondria", "difficulty": "EASY"},
+      {"question": "Which structure produces food and oxygen by performing photosynthesis in plant cells?", "options": ["Chloroplast", "Golgi apparatus", "Vacuole", "Centrosome"], "answer": "Chloroplast", "difficulty": "EASY"},
+      {"question": "Which is the smallest organelle where protein synthesis occurs in the cell?", "options": ["Ribosome", "Mitochondria", "Lysosome", "Centrosome"], "answer": "Ribosome", "difficulty": "NORMAL"},
+      {"question": "Who are the scientists that discovered the double helix structure of the DNA molecule in 1953?", "options": ["Watson and Crick", "Mendel and Darwin", "Pasteur and Koch", "Hooke and Brown"], "answer": "Watson and Crick", "difficulty": "HARD"},
+      {"question": "Which of the following is the control and management center of the cell?", "options": ["Nucleus", "Cytoplasm", "Cell Membrane", "Cell Wall"], "answer": "Nucleus", "difficulty": "EASY"}
     ]`
+    }
   },
   {
     title: 'Fizik - Kuvvet ve Hareket',
     icon: '⚛️',
-    text: `[
+    text: {
+      tr: `[
       {"question": "Hız kavramının fiziksel tanımı aşağıdakilerden hangisidir?", "options": ["Zamana göre konumun türevi", "Birim kütleye düşen enerji", "İvmenin zamana göre değişimi", "Skaler yer değiştirme"], "answer": "Zamana göre konumun türevi", "difficulty": "HARD"},
       {"question": "Klasik mekaniğin temeli olan hareket yasaları hangi eserde 1687 yılında yayınlanmıştır?", "options": ["Principia Mathematica", "Opticks", "Almagest", "De Revolutionibus"], "answer": "Principia Mathematica", "difficulty": "HARD"},
       {"question": "Dünya yüzeyindeki standart yerçekimi ivmesi yaklaşık olarak kaç m/s²'dir?", "options": ["9.806", "10.5", "8.92", "1.62"], "answer": "9.806", "difficulty": "NORMAL"},
       {"question": "İvme ile kütlenin çarpımı fizikte hangi büyüklüğü ifade eder?", "options": ["Kuvvet", "İş", "Momentum", "Güç"], "answer": "Kuvvet", "difficulty": "EASY"}
+    ]`,
+      en: `[
+      {"question": "What is the physical definition of the concept of velocity?", "options": ["Derivative of position with respect to time", "Energy per unit mass", "Change of acceleration over time", "Scalar displacement"], "answer": "Derivative of position with respect to time", "difficulty": "HARD"},
+      {"question": "In which work were the laws of motion, the foundation of classical mechanics, published in 1687?", "options": ["Principia Mathematica", "Opticks", "Almagest", "De Revolutionibus"], "answer": "Principia Mathematica", "difficulty": "HARD"},
+      {"question": "What is the standard acceleration due to gravity on the Earth's surface approximately in m/s²?", "options": ["9.806", "10.5", "8.92", "1.62"], "answer": "9.806", "difficulty": "NORMAL"},
+      {"question": "What quantity does the product of acceleration and mass represent in physics?", "options": ["Force", "Work", "Momentum", "Power"], "answer": "Force", "difficulty": "EASY"}
     ]`
+    }
   },
   {
     title: 'Coğrafya - Türkiye',
     icon: '🗺️',
-    text: `[
+    text: {
+      tr: `[
       {"question": "Türkiye'nin en uzun nehri aşağıdakilerden hangisidir?", "options": ["Kızılırmak", "Yeşilırmak", "Fırat", "Dicle"], "answer": "Kızılırmak", "difficulty": "EASY"},
       {"question": "Türkiye'nin en yüksek noktası olan Ağrı Dağı'nın yüksekliği kaç metredir?", "options": ["5137", "3917", "4058", "5012"], "answer": "5137", "difficulty": "NORMAL"},
       {"question": "Sodalı sulara sahip olan Türkiye'nin en büyük gölü hangisidir?", "options": ["Van Gölü", "Tuz Gölü", "Beyşehir Gölü", "Eğirdir Gölü"], "answer": "Van Gölü", "difficulty": "EASY"}
+    ]`,
+      en: `[
+      {"question": "Which of the following is the longest river in Turkey?", "options": ["Kızılırmak", "Yeşilırmak", "Euphrates", "Tigris"], "answer": "Kızılırmak", "difficulty": "EASY"},
+      {"question": "What is the height of Mount Ararat, the highest point in Turkey, in meters?", "options": ["5137", "3917", "4058", "5012"], "answer": "5137", "difficulty": "NORMAL"},
+      {"question": "Which is the largest lake in Turkey known for its soda-rich waters?", "options": ["Lake Van", "Lake Tuz", "Lake Beyşehir", "Lake Eğirdir"], "answer": "Lake Van", "difficulty": "EASY"}
     ]`
+    }
   }
 ];
